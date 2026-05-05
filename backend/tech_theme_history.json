@@ -1,0 +1,66 @@
+[
+  {
+    "trade_date": "20260504",
+    "code": "QCOM",
+    "name": "高通",
+    "theme": "AI手机/XR芯片",
+    "change_pct": 18.94,
+    "recorded_at": "2026-05-04T16:00:18+08:00"
+  },
+  {
+    "trade_date": "20260504",
+    "code": "0981.HK",
+    "name": "中芯国际",
+    "theme": "国产半导体制造",
+    "change_pct": 12.83,
+    "recorded_at": "2026-05-04T16:00:18+08:00"
+  },
+  {
+    "trade_date": "20260504",
+    "code": "GOOGL",
+    "name": "谷歌",
+    "theme": "AI模型/云/广告",
+    "change_pct": 11.99,
+    "recorded_at": "2026-05-04T20:23:07+08:00"
+  },
+  {
+    "trade_date": "20260504",
+    "code": "ARM",
+    "name": "Arm",
+    "theme": "AI终端/芯片IP",
+    "change_pct": -10.11,
+    "recorded_at": "2026-05-04T20:23:07+08:00"
+  },
+  {
+    "trade_date": "20260504",
+    "code": "META",
+    "name": "Meta",
+    "theme": "AI应用/XR",
+    "change_pct": -9.82,
+    "recorded_at": "2026-05-04T20:27:22+08:00"
+  },
+  {
+    "trade_date": "20260504",
+    "code": "002415.SZ",
+    "name": "海康威视",
+    "theme": "AI视觉/物联网",
+    "change_pct": 8.01,
+    "recorded_at": "2026-05-04T20:27:22+08:00"
+  },
+  {
+    "trade_date": "20260504",
+    "code": "NVDA",
+    "name": "英伟达",
+    "theme": "AI算力/GPU",
+    "change_pct": -8.65,
+    "recorded_at": "2026-05-04T22:07:00+08:00"
+  },
+  {
+    "trade_date": "20260504",
+    "code": "AMD",
+    "name": "AMD",
+    "theme": "AI算力/GPU",
+    "change_pct": 4.33,
+    "recorded_at": "2026-05-04T22:07:00+08:00"
+  }
+]

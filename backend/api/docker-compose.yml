@@ -1,0 +1,19 @@
+services:
+  quant-api:
+    build: .
+    container_name: quant-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=financial_assistant
+      - DB_USER=financial_user
+      - DB_PASSWORD=REMOVED_PASSWORD
+    networks:
+      - postgres_default
+
+networks:
+  postgres_default:
+    external: true

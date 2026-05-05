@@ -1,0 +1,110 @@
+[
+  {
+    "trade_date": "20260420",
+    "code": "601997.SH",
+    "name": "贵阳银行",
+    "margin": null,
+    "recorded_at": "seeded-from-2026-05-03-output"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "600015.SH",
+    "name": "华夏银行",
+    "margin": null,
+    "recorded_at": "seeded-from-2026-05-03-output"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "600016.SH",
+    "name": "民生银行",
+    "margin": null,
+    "recorded_at": "seeded-from-2026-05-03-output"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "601186.SH",
+    "name": "中国铁建",
+    "margin": 72.16,
+    "recorded_at": "2026-05-04T16:00:12+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "601169.SH",
+    "name": "北京银行",
+    "margin": 71.62,
+    "recorded_at": "2026-05-04T16:00:12+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "601818.SH",
+    "name": "光大银行",
+    "margin": 71.39,
+    "recorded_at": "2026-05-04T16:00:12+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "600269.SH",
+    "name": "赣粤高速",
+    "margin": 56.23,
+    "recorded_at": "2026-05-04T20:23:02+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "600064.SH",
+    "name": "南京高科",
+    "margin": 53.96,
+    "recorded_at": "2026-05-04T20:23:02+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "000726.SZ",
+    "name": "鲁泰Ａ",
+    "margin": 52.05,
+    "recorded_at": "2026-05-04T20:23:02+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "600020.SH",
+    "name": "中原高速",
+    "margin": 48.26,
+    "recorded_at": "2026-05-04T20:27:17+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "000623.SZ",
+    "name": "吉林敖东",
+    "margin": 47.23,
+    "recorded_at": "2026-05-04T20:27:17+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "600035.SH",
+    "name": "楚天高速",
+    "margin": 47.18,
+    "recorded_at": "2026-05-04T20:27:17+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "000498.SZ",
+    "name": "山东路桥",
+    "price": 5.84,
+    "margin": 69.21,
+    "recorded_at": "2026-05-04T22:06:55+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "601916.SH",
+    "name": "浙商银行",
+    "price": 3.0,
+    "margin": 63.78,
+    "recorded_at": "2026-05-04T22:06:55+08:00"
+  },
+  {
+    "trade_date": "20260420",
+    "code": "600908.SH",
+    "name": "无锡银行",
+    "price": 5.67,
+    "margin": 63.56,
+    "recorded_at": "2026-05-04T22:06:55+08:00"
+  }
+]
