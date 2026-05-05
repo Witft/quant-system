@@ -18,6 +18,7 @@ export default function App() {
     axios.get(`${API_BASE}/picks`).then(res => setPicks(res.data?.data || res.data || [])).catch(console.error);
   }, []);
 
+  // 根据安全边际百分比返回对应的Badge颜色类名
   const getMarginColor = (margin: any) => {
     if (margin == null) return "bg-slate-300";
     if (margin > 60) return "bg-green-500";
@@ -25,7 +26,7 @@ export default function App() {
     return "bg-amber-500";
   };
 
-  // Process data for Margin Bar Chart safely
+  // 取前10条记录用于安全边际柱状图
   const marginData = picks.slice(0, 10).map(p => ({
     name: p.code,
     margin: p.margin || 0,
@@ -33,7 +34,7 @@ export default function App() {
     value: p.graham || 0
   }));
 
-  // Process data for ROE vs Debt Scatter safely
+  // 构建ROE vs 负债率散点图数据（气泡大小=安全边际）
   const scatterData = picks.map(p => ({
     name: p.code,
     x: p.roe || 0,
@@ -41,6 +42,7 @@ export default function App() {
     z: p.margin || 50
   }));
 
+  // 安全的数字格式化，null/NaN显示为'-'
   const formatNum = (val: any, decimals: number = 2) => {
     if (val == null || isNaN(val)) return '-';
     return Number(val).toFixed(decimals);

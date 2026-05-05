@@ -21,6 +21,7 @@ app = FastAPI(title="Quant Stock Picks API", version="0.1.0")
 
 
 def get_conn():
+    """创建PostgreSQL数据库连接"""
     return psycopg2.connect(
         host=DB_HOST, port=DB_PORT, dbname=DB_NAME,
         user=DB_USER, password=DB_PASSWORD
@@ -55,6 +56,7 @@ class StatsOut(BaseModel):
 
 @app.get("/api/stats", response_model=StatsOut)
 def stats():
+    """GET /api/stats — 返回汇总统计（总天数、总推荐数、平均安全边际、平均ROE）"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
@@ -76,6 +78,7 @@ def stats():
 
 @app.get("/api/picks")
 def picks(
+    """GET /api/picks — 查询选股记录，支持按日期/股票代码筛选"""
     date: str = Query(None, min_length=8, max_length=8),
     code: str = Query(None, min_length=3, max_length=12),
     limit: int = Query(50, ge=1, le=200),
@@ -109,6 +112,7 @@ def picks(
 
 @app.get("/health")
 def health():
+    """GET /health — 健康检查，验证数据库连接是否正常"""
     try:
         conn = get_conn()
         conn.close()

@@ -36,6 +36,7 @@ DB_USER = "financial_user"
 DB_PASSWORD = os.getenv("FINANCIAL_PG_PASSWORD")  # Set via cron env or VPS .env
 
 def get_pg_conn(password=None):
+    """创建PostgreSQL数据库连接"""
     p = password or DB_PASSWORD or os.getenv("DATABASE_URL", "").split(":")[-1].split("@")[0]
     return psycopg2.connect(
         host=DB_HOST, port=DB_PORT, dbname=DB_NAME,
@@ -44,6 +45,7 @@ def get_pg_conn(password=None):
 
 
 def init_db():
+    """初始化数据库：创建stock_picks表和索引（如果不存在）"""
     conn = get_pg_conn()
     cur = conn.cursor()
     cur.execute("""
@@ -75,6 +77,7 @@ def init_db():
 
 
 def upsert_pick(pick: dict):
+    """插入或更新一条选股记录到stock_picks表（按交易日+股票代码去重）"""
     conn = get_pg_conn()
     cur = conn.cursor()
     cur.execute("""
@@ -100,6 +103,7 @@ def upsert_pick(pick: dict):
 
 
 def query_picks(trade_date: str = None, limit: int = 50) -> list:
+    """查询选股记录，可按交易日筛选，默认按安全边际降序"""
     conn = get_pg_conn()
     cur = conn.cursor()
     if trade_date:
@@ -120,6 +124,7 @@ def query_picks(trade_date: str = None, limit: int = 50) -> list:
 
 
 def query_stats() -> dict:
+    """查询汇总统计：总天数、总推荐数、平均安全边际、平均ROE"""
     conn = get_pg_conn()
     cur = conn.cursor()
     cur.execute("""
@@ -137,6 +142,7 @@ def query_stats() -> dict:
 # ── Tushare helpers ──────────────────────────────────────────────────────────
 
 def get_last_trade_date():
+    """获取最近一个A股交易日"""
     end   = datetime.now().strftime("%Y%m%d")
     start = (datetime.now() - timedelta(days=20)).strftime("%Y%m%d")
     cal = pro.trade_cal(exchange="SSE", is_open="1", start_date=start, end_date=end)
@@ -146,6 +152,7 @@ def get_last_trade_date():
 
 
 def fetch_prices_batch(codes, trade_date):
+    """批量获取指定交易日的股票收盘价（每批50只，限速0.12s）"""
     prices = {}
     for i in range(0, len(codes), 50):
         batch = ",".join(codes[i:i + 50])
@@ -162,6 +169,7 @@ def fetch_prices_batch(codes, trade_date):
 # ── AI helpers ───────────────────────────────────────────────────────────────
 
 def ask_minimax(prompt: str) -> str:
+    """调用MiniMax大模型API，返回AI分析文本"""
     key = os.getenv("MINIMAX_CN_API_KEY")
     if not key:
         return "AI analysis skipped: MINIMAX_CN_API_KEY not set."
@@ -182,7 +190,7 @@ def ask_minimax(prompt: str) -> str:
 
 
 def parse_structured_response(text: str) -> dict:
-    """Extract key fields from free-form AI text into structured dict."""
+    """从AI自由文本中提取结构化字段（推荐结论、风险点）"""
     out = {}
     for line in text.split("\n"):
         line = line.strip()

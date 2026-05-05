@@ -22,7 +22,7 @@ REPORT_FILE = BASE_DIR / "backtest_report.txt"
 
 
 def get_last_trade_date():
-    """Get most recent trading date. Tushare returns descending order, iloc[0] is latest."""
+    """获取最近一个A股交易日"""
     end = datetime.now().strftime("%Y%m%d")
     start = (datetime.now() - timedelta(days=20)).strftime("%Y%m%d")
     cal = pro.trade_cal(exchange="SSE", is_open="1", start_date=start, end_date=end)
@@ -32,6 +32,7 @@ def get_last_trade_date():
 
 
 def fetch_prices_batch(codes, trade_date):
+    """批量获取指定交易日的股票收盘价（每批50只）"""
     prices = {}
     for i in range(0, len(codes), 50):
         batch = ",".join(codes[i:i + 50])
@@ -47,6 +48,7 @@ def fetch_prices_batch(codes, trade_date):
 
 
 def fetch_prices_fallback(codes, trade_date):
+    """带降级的价格获取：先尝试目标日期，失败则逐日回溯历史交易日"""
     prices = fetch_prices_batch(codes, trade_date)
     if prices:
         return prices
@@ -64,6 +66,7 @@ def fetch_prices_fallback(codes, trade_date):
 
 
 def evaluate():
+    """回测主函数：读取历史选股记录，对比当前价格，计算收益率、胜率，生成报告"""
     if not HISTORY_FILE.exists():
         return None, "No history found."
 

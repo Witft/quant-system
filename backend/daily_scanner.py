@@ -57,6 +57,7 @@ TECH_WATCHLIST = [
 ]
 
 def load_history():
+    """加载A股选股历史记录（JSON文件）"""
     if not HISTORY_FILE.exists():
         return []
     try:
@@ -67,11 +68,13 @@ def load_history():
         return []
 
 def save_history(history):
+    """将选股历史写入JSON文件"""
     HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
     with HISTORY_FILE.open("w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
 
 def recent_analyzed_codes(history, trade_date, days=RECENT_DAYS):
+    """从历史记录中提取最近N天内已分析过的股票代码，用于去重"""
     cutoff = datetime.strptime(trade_date, "%Y%m%d") - timedelta(days=days)
     codes = set()
     for item in history:
@@ -87,7 +90,7 @@ def recent_analyzed_codes(history, trade_date, days=RECENT_DAYS):
     return codes
 
 def record_picks(history, picks, trade_date):
-    # 幂等：同一个交易日重复运行时不要重复写入历史
+    """将当日选股结果记录到历史中，幂等去重，并裁剪超过60天的旧记录"""
     existing = {(item.get("trade_date"), item.get("code")) for item in history}
     for stock in picks:
         key = (trade_date, stock["code"])
@@ -112,6 +115,7 @@ def record_picks(history, picks, trade_date):
     save_history(compacted)
 
 def load_json_list(path):
+    """通用的JSON列表文件加载器"""
     if not path.exists():
         return []
     try:
@@ -122,11 +126,13 @@ def load_json_list(path):
         return []
 
 def save_json_list(path, data):
+    """通用的JSON列表文件写入器"""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def fetch_yahoo_quote(symbol):
+    """从Yahoo Finance获取美股/港股的最新行情（价格、涨跌幅）"""
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5d&interval=1d"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=20) as response:
@@ -147,6 +153,7 @@ def fetch_yahoo_quote(symbol):
     }
 
 def scan_tech_themes(limit=TECH_DAILY_PICK_COUNT):
+    """扫描AI/XR/科技数码跨市场主题观察池（美股+港股+A股），按当日波动排序，14天去重"""
     today = datetime.now(TZ).strftime("%Y%m%d")
     print(f"4. 正在扫描 AI/XR/科技数码跨市场主题观察池 ({len(TECH_WATCHLIST)}只)...")
     history = load_json_list(TECH_HISTORY_FILE)
@@ -197,6 +204,7 @@ def scan_tech_themes(limit=TECH_DAILY_PICK_COUNT):
     return selected, today, len(candidates), len(recent_symbols)
 
 def ask_minimax(prompt):
+    """调用MiniMax大模型API进行AI分析"""
     if not MINIMAX_API_KEY:
         return "未配置 MINIMAX_CN_API_KEY，跳过 AI 分析。"
         
@@ -220,12 +228,14 @@ def ask_minimax(prompt):
         return f"AI分析失败: {e}"
 
 def get_last_trade_date():
+    """获取最近一个A股交易日日期"""
     end_date = datetime.now().strftime('%Y%m%d')
     start_date = (datetime.now() - timedelta(days=15)).strftime('%Y%m%d')
     df_cal = pro.trade_cal(exchange='SSE', is_open='1', start_date=start_date, end_date=end_date)
     return df_cal['cal_date'].iloc[-1]
 
 def scan_a_shares(limit=DAILY_PICK_COUNT, candidate_pool_size=CANDIDATE_POOL_SIZE):
+    """A股核心选股流程：格雷厄姆估值扫描 → 基本面排雷 → 7天去重 → 返回每日Top N"""
     last_date = get_last_trade_date()
     print(f"1. 正在获取全市场 A 股基础行情 (交易日: {last_date})...")
     
@@ -316,6 +326,7 @@ def scan_a_shares(limit=DAILY_PICK_COUNT, candidate_pool_size=CANDIDATE_POOL_SIZ
     return selected, last_date, len(candidate_pool), len(recent_codes)
 
 def generate_daily_report():
+    """主入口：运行A股扫描 + 科技主题扫描，对每只股票调用AI分析，生成完整日报"""
     top_stocks, trade_date, candidate_count, recent_count = scan_a_shares() # Top30候选池 + 最近7天去重 + 每日3只
     tech_stocks, tech_date, tech_count, tech_recent_count = scan_tech_themes()
     
