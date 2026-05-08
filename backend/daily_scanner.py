@@ -297,13 +297,20 @@ def scan_a_shares(limit=DAILY_PICK_COUNT, candidate_pool_size=CANDIDATE_POOL_SIZ
             
             ocfps = f.get('ocfps', -1)
             ocfps = -1 if pd.isna(ocfps) else ocfps
-            
+
             netprofit_yoy = f.get('netprofit_yoy', -100)
             netprofit_yoy = -100 if pd.isna(netprofit_yoy) else netprofit_yoy
-            
+
             if roe > 0 and ocfps > 0 and debt_to_assets < 85 and netprofit_yoy > -50:
                 s['roe'] = round(roe, 2)
                 s['debt_to_assets'] = round(debt_to_assets, 2)
+                s['ocfps'] = round(ocfps, 4) if not pd.isna(ocfps) else None
+                s['netprofit_yoy'] = round(netprofit_yoy, 2) if not pd.isna(netprofit_yoy) else None
+                # F-Score 细分指标
+                s['grossprofit_margin'] = round(f.get('grossprofit_margin', 0), 2) if not pd.isna(f.get('grossprofit_margin', None)) else None
+                s['roa'] = round(f.get('roa', 0), 2) if not pd.isna(f.get('roa', None)) else None
+                s['current_ratio'] = round(f.get('current_ratio', 0), 2) if not pd.isna(f.get('current_ratio', None)) else None
+                s['quick_ratio'] = round(f.get('quick_ratio', 0), 2) if not pd.isna(f.get('quick_ratio', None)) else None
                 candidate_pool.append(s)
         else:
             # 如果拿不到数据，暂时放过，但没有这些指标
@@ -357,16 +364,22 @@ def generate_daily_report():
         except:
             pass
             
+        fscore_data = (
+            f"ROE {s.get('roe', '未知')}% | 资产负债率 {s.get('debt_to_assets', '未知')}% | "
+            f"每股经营现金流 {s.get('ocfps', '未知')}元 | 净利润同比增长 {s.get('netprofit_yoy', '未知')}% | "
+            f"销售毛利率 {s.get('grossprofit_margin', '未知')}% | ROA {s.get('roa', '未知')}% | "
+            f"流动比率 {s.get('current_ratio', '未知')} | 速动比率 {s.get('quick_ratio', '未知')}"
+        )
         prompt = f"""
 你现在主持一场针对A股公司【{s['name']}({s['code']})】的投资决策会议。
 当前股价: ￥{s['price']}，理论内在价值(格雷厄姆数字): ￥{s['graham']} (安全边际: {s['margin']}%)
 市盈率(PE TTM): {s['pe']}，市净率(PB): {s['pb']}
-基本面数据：ROE {s.get('roe', '未知')}%，资产负债率 {s.get('debt_to_assets', '未知')}%
+基本面数据：{fscore_data}
 主营业务：{summary}
 
 请以如下结构严格输出会议记录：
 1. 😈 【做空蓝军排雷】：不要说好话！假设你持有10亿做空仓位，请强行挑出这只股票最致命的 3 个潜在暴雷点或价值陷阱（如：涉房涉地方债、重资产折旧、技术被淘汰等）。
-2. 🧐 【F-Score 审计师】：基于皮奥特罗斯基(Piotroski)的财务健康理念和该公司的行业特征，指出要确认它“不是即将破产的垃圾股”，我们最需要重点查验它的哪 2 个底层财务指标？（如：经营现金流、毛利率等）为什么？
+2. 🧐 【F-Score 审计师】：基于上方给出的财务数据和皮奥特罗斯基(Piotroski) F-Score 理念，选出你认为最关键的 2 个指标，列出它们的当前值，并说明这些值是否令人担忧。格式示例：「① 经营现金流(每股)：X元 → 说明… ② 毛利率：X% → 说明…」
 3. 👨‍🏫 【金融私教课】：从上述两点分析中，提取一个最核心的专业金融词汇，向非金融专业的IT工程师用生活中的比喻解释一下（80字以内）。
 4. ⚖️ 【最终裁决】：(坚决回避 / 放入观察池 / 具备安全边际可买入)
 """
@@ -374,7 +387,8 @@ def generate_daily_report():
         
         report += f"🔥 标的：{s['name']} ({s['code']})\n"
         report += f"   数据：现价 ￥{s['price']} | 理论估值 ￥{s['graham']} | PE {s['pe']} | PB {s['pb']}\n"
-        report += f"   基本面：ROE {s.get('roe', '未知')}% | 负债率 {s.get('debt_to_assets', '未知')}%\n\n"
+        report += f"   基本面：ROE {s.get('roe', '未知')}% | 负债率 {s.get('debt_to_assets', '未知')}% | 经营现金流 {s.get('ocfps', '未知')}元 | 净利润增速 {s.get('netprofit_yoy', '未知')}%\n"
+        report += f"   F-Score：毛利率 {s.get('grossprofit_margin', '未知')}% | ROA {s.get('roa', '未知')}% | 流动比率 {s.get('current_ratio', '未知')} | 速动比率 {s.get('quick_ratio', '未知')}\n\n"
         report += f"{analysis}\n"
         report += "="*50 + "\n"
 

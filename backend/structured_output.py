@@ -273,6 +273,11 @@ def run_pipeline(top_n: int = 3):
                 s["debt_to_assets"] = round(debt, 2)
                 s["ocfps"]          = round(ocfps, 2)
                 s["netprofit_yoy"]  = round(npm, 2)
+                # F-Score 细分指标
+                s["grossprofit_margin"] = round(f.get("grossprofit_margin", 0), 2) if not pd.isna(f.get("grossprofit_margin", None)) else None
+                s["roa"]            = round(f.get("roa", 0), 2) if not pd.isna(f.get("roa", None)) else None
+                s["current_ratio"]  = round(f.get("current_ratio", 0), 2) if not pd.isna(f.get("current_ratio", None)) else None
+                s["quick_ratio"]    = round(f.get("quick_ratio", 0), 2) if not pd.isna(f.get("quick_ratio", None)) else None
                 candidate_pool.append(s)
         else:
             candidate_pool.append(s)
@@ -291,15 +296,21 @@ def run_pipeline(top_n: int = 3):
         except Exception:
             summary = ""
 
+        fscore_data = (
+            f"ROE {s.get('roe','未知')}% | 资产负债率 {s.get('debt_to_assets','未知')}% | "
+            f"每股经营现金流 {s.get('ocfps','未知')}元 | 净利润同比增长 {s.get('netprofit_yoy','未知')}% | "
+            f"销售毛利率 {s.get('grossprofit_margin','未知')}% | ROA {s.get('roa','未知')}% | "
+            f"流动比率 {s.get('current_ratio','未知')} | 速动比率 {s.get('quick_ratio','未知')}"
+        )
         prompt = f"""你现在主持一场针对A股公司【{s['name']}({s['code']})】的投资决策会议。
 当前股价: ￥{s['price']}，理论内在价值(格雷厄姆数字): ￥{s['graham']} (安全边际: {s['margin']}%)
 市盈率(PE TTM): {s['pe']}，市净率(PB): {s['pb']}
-基本面数据：ROE {s.get('roe','未知')}%，资产负债率 {s.get('debt_to_assets','未知')}%
+基本面数据：{fscore_data}
 主营业务：{summary}
 
 请以如下结构严格输出会议记录：
 1. 【做空蓝军排雷】：挑出这只股票最致命的3个潜在暴雷点或价值陷阱。
-2. 【F-Score审计师】：基于皮奥特罗斯基F-Score，指出最需要重点查验的2个底层财务指标。
+2. 【F-Score审计师】：基于上方给出的财务数据和皮奥特罗斯基F-Score理念，选出最关键的2个指标，列出当前值并说明是否令人担忧。格式：「① 指标名：X → 说明… ② 指标名：X → 说明…」
 3. 【金融私教课】：提取一个最核心的专业金融词汇，用生活比喻解释（80字以内）。
 4. 【最终裁决】：(坚决回避 / 放入观察池 / 具备安全边际可买入)
 """
