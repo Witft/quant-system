@@ -25,6 +25,8 @@ pro = ts.pro_api()
 BASE_DIR = Path(__file__).resolve().parent
 HISTORY_FILE = BASE_DIR / "daily_scanner_history.json"
 TECH_HISTORY_FILE = BASE_DIR / "tech_theme_history.json"
+LATEST_REPORT_FILE = BASE_DIR / "latest_daily_report.md"
+REPORT_ARCHIVE_DIR = BASE_DIR / "reports"
 RECENT_DAYS = 7
 TECH_RECENT_DAYS = 14
 CANDIDATE_POOL_SIZE = 100
@@ -130,6 +132,18 @@ def save_json_list(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+def save_text_file(path, content):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        f.write(content)
+
+def persist_final_report(report_text):
+    save_text_file(LATEST_REPORT_FILE, report_text)
+    timestamp = datetime.now(TZ).strftime("%Y%m%d_%H%M%S")
+    archive_path = REPORT_ARCHIVE_DIR / f"daily_report_{timestamp}.md"
+    save_text_file(archive_path, report_text)
+    return archive_path
 
 def fetch_yahoo_quote(symbol):
     """从Yahoo Finance获取美股/港股的最新行情（价格、涨跌幅）"""
@@ -338,8 +352,10 @@ def generate_daily_report():
     tech_stocks, tech_date, tech_count, tech_recent_count = scan_tech_themes()
     
     if not top_stocks and not tech_stocks:
-        print("[SILENT] 今日无满足安全边际的股票推荐，科技主题观察池也暂无可分析标的。")
-        return
+        no_result_message = "今日无满足安全边际的股票推荐，科技主题观察池也暂无可分析标的。"
+        persist_final_report(no_result_message)
+        print("[SILENT] " + no_result_message)
+        return no_result_message
         
     report = "=================================================\n"
     report += "🤖 【AI 投资董事会】每日深度低估扫描与科技主题观察\n"
@@ -421,7 +437,9 @@ def generate_daily_report():
         report += f"{analysis}\n"
         report += "="*50 + "\n"
         
+    persist_final_report(report)
     print(report)
+    return report
 
 if __name__ == "__main__":
     generate_daily_report()
