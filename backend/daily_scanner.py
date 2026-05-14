@@ -1,5 +1,6 @@
 import os
 import json
+import urllib.error
 import urllib.request
 import math
 import time
@@ -16,7 +17,9 @@ try:
 except ImportError:
     pass
 
-MINIMAX_API_KEY = os.environ.get("MINIMAX_CN_API_KEY")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
+DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "https://api.deepseek.com/chat/completions")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-pro")
 TUSHARE_TOKEN = os.environ.get("TUSHARE_TOKEN", "REMOVED_TOKEN")
 
 ts.set_token(TUSHARE_TOKEN)
@@ -240,27 +243,45 @@ def scan_tech_themes(limit=TECH_DAILY_PICK_COUNT):
     save_json_list(TECH_HISTORY_FILE, compacted)
     return selected, today, len(candidates), len(recent_symbols)
 
-def ask_minimax(prompt):
-    """调用MiniMax大模型API进行AI分析"""
-    if not MINIMAX_API_KEY:
-        return "未配置 MINIMAX_CN_API_KEY，跳过 AI 分析。"
-        
-    url = "https://api.minimax.chat/v1/text/chatcompletion_v2"
+def ask_deepseek(prompt):
+    """调用 DeepSeek v4 pro 进行 AI 分析"""
+    if not DEEPSEEK_API_KEY:
+        return "未配置 DEEPSEEK_API_KEY，跳过 AI 分析。"
+
     headers = {
-        "Authorization": f"Bearer {MINIMAX_API_KEY}",
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "MiniMax-M2.7", 
+        "model": DEEPSEEK_MODEL,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.2 
+        "temperature": 0.2
     }
-    
-    req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+
+    req = urllib.request.Request(
+        DEEPSEEK_API_URL,
+        data=json.dumps(payload).encode('utf-8'),
+        headers=headers,
+    )
     try:
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=60) as response:
             result = json.loads(response.read().decode('utf-8'))
-            return result['choices'][0]['message']['content']
+            choices = result.get('choices') or []
+            if not choices:
+                error = result.get('error') or {}
+                detail = error.get('message') or error.get('type') or json.dumps(result, ensure_ascii=False)[:300]
+                return f"AI分析失败: DeepSeek 返回空 choices（{detail}）"
+            message = choices[0].get('message') or {}
+            content = message.get('content')
+            if content:
+                return content
+            reasoning = message.get('reasoning_content')
+            if reasoning:
+                return f"AI分析失败: DeepSeek 未返回最终结论，仅返回推理内容：{reasoning[:200]}"
+            return "AI分析失败: DeepSeek 返回空消息内容。"
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode('utf-8', errors='ignore')[:500]
+        return f"AI分析失败: HTTP {e.code} {detail}"
     except Exception as e:
         return f"AI分析失败: {e}"
 
@@ -422,7 +443,7 @@ def generate_daily_report():
 3. 👨‍🏫 【金融私教课】：从上述两点分析中，提取一个最核心的专业金融词汇，向非金融专业的IT工程师用生活中的比喻解释一下（80字以内）。
 4. ⚖️ 【最终裁决】：(坚决回避 / 放入观察池 / 具备安全边际可买入)
 """
-        analysis = ask_minimax(prompt)
+        analysis = ask_deepseek(prompt)
         
         report += f"🔥 标的：{s['name']} ({s['code']})\n"
         report += f"   数据：现价 ￥{s['price']} | 理论估值 ￥{s['graham']} | PE {s['pe']} | PB {s['pb']}\n"
@@ -452,7 +473,7 @@ def generate_daily_report():
 3. 📌 【后续观察指标】：列出接下来最值得跟踪的 2 个催化剂或财报指标。
 4. ⚖️ 【观察结论】：(忽略 / 放入观察池 / 值得深入研究)，并说明原因。不要给直接买入建议。
 """
-        analysis = ask_minimax(prompt)
+        analysis = ask_deepseek(prompt)
         report += f"🧭 主题标的：{s['name']} ({s['symbol']})\n"
         report += f"   主题：{s['theme']} | 市场：{s['market']} | 价格：{price_text} | 涨跌幅：{change_text}\n\n"
         if s.get("quote_error"):

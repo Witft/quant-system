@@ -11,6 +11,7 @@ import json
 import math
 import os
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -168,23 +169,38 @@ def fetch_prices_batch(codes, trade_date):
 
 # ── AI helpers ───────────────────────────────────────────────────────────────
 
-def ask_minimax(prompt: str) -> str:
-    """调用MiniMax大模型API，返回AI分析文本"""
-    key = os.getenv("MINIMAX_CN_API_KEY")
+def ask_deepseek(prompt: str) -> str:
+    """调用 DeepSeek v4 pro，返回 AI 分析文本"""
+    key = os.getenv("DEEPSEEK_API_KEY")
     if not key:
-        return "AI analysis skipped: MINIMAX_CN_API_KEY not set."
-    url = "https://api.minimax.chat/v1/text/chatcompletion_v2"
+        return "AI analysis skipped: DEEPSEEK_API_KEY not set."
+    url = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/chat/completions")
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     payload = {
-        "model": "MiniMax-M2.7",
+        "model": os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.2,
     }
     req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=60) as resp:
             result = json.loads(resp.read().decode("utf-8"))
-            return result["choices"][0]["message"]["content"]
+            choices = result.get("choices") or []
+            if not choices:
+                error = result.get("error") or {}
+                detail = error.get("message") or error.get("type") or json.dumps(result, ensure_ascii=False)[:300]
+                return f"AI call failed: DeepSeek returned empty choices ({detail})"
+            message = choices[0].get("message") or {}
+            content = message.get("content")
+            if content:
+                return content
+            reasoning = message.get("reasoning_content")
+            if reasoning:
+                return f"AI call failed: DeepSeek returned reasoning only ({reasoning[:200]})"
+            return "AI call failed: DeepSeek returned empty message content."
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="ignore")[:500]
+        return f"AI call failed: HTTP {e.code} {detail}"
     except Exception as e:
         return f"AI call failed: {e}"
 
@@ -314,7 +330,7 @@ def run_pipeline(top_n: int = 3):
 3. 【金融私教课】：提取一个最核心的专业金融词汇，用生活比喻解释（80字以内）。
 4. 【最终裁决】：(坚决回避 / 放入观察池 / 具备安全边际可买入)
 """
-        raw_text = ask_minimax(prompt)
+        raw_text = ask_deepseek(prompt)
         structured = parse_structured_response(raw_text)
         ai_json = json.dumps(structured, ensure_ascii=False) if structured else None
 
